@@ -1,0 +1,9 @@
+openai-whisper
+torch
+moviepy
+opencv-python
+Pillow
+numpy
+customtkinter
+imageio
+imageio-ffmpeg

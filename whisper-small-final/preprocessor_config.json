@@ -9,6 +9,7 @@
   "nb_max_frames": 3000,
   "padding_side": "right",
   "padding_value": 0.0,
+  "processor_class": "WhisperProcessor",
   "return_attention_mask": false,
   "sampling_rate": 16000
 }

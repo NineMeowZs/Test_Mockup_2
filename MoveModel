@@ -1,0 +1,16 @@
+from transformers import WhisperForConditionalGeneration, WhisperProcessor
+
+# 1. เปลี่ยนชื่อโมเดลเป็นตัวที่คุณต้องการ
+model_name = "biodatlab/whisper-th-large-v3-combined"
+
+# 2. โหลดโมเดล (เพิ่ม trust_remote_code=True เพื่อความปลอดภัย)
+print(f"กำลังดาวน์โหลดโมเดล {model_name} (ขนาดใหญ่ โปรดรอสักครู่)...")
+processor = WhisperProcessor.from_pretrained(model_name, trust_remote_code=True)
+base_model = WhisperForConditionalGeneration.from_pretrained(model_name, trust_remote_code=True)
+
+# 3. สั่งเซฟลงโฟลเดอร์ที่ต้องการ
+local_base_path = "./models/whisper-th-large-v3" 
+processor.save_pretrained(local_base_path)
+base_model.save_pretrained(local_base_path)
+
+print(f"ดาวน์โหลดสำเร็จ! โมเดลถูกเก็บไว้ที่: {local_base_path}")

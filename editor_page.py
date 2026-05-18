@@ -1663,12 +1663,36 @@ class EditorPage(ctk.CTkFrame):
     # ─────────────────────────────────────────────────────────────────────────
     def _export(self):
         if not self.tracks["main"]:
-            messagebox.showwarning("Export","No video on main track!"); return
-        out=filedialog.asksaveasfilename(title="Export",defaultextension=".mp4",
-                                         filetypes=[("MP4","*.mp4"),("All","*.*")])
+            messagebox.showwarning("Export", "No video on main track!"); return
+
+        # ── ถ้ามี subtitle ให้ถามว่าจะ burn ด้วยไหม ─────────────────────────
+        burn_subs = False
+        if self.segments:
+            burn_subs = messagebox.askyesno(
+                "Export with Subtitles?",
+                f"พบ {len(self.segments)} ซับไตเติล\n\n"
+                "ต้องการ Burn ซับลงวิดีโอด้วยหรือไม่?\n\n"
+                "Yes = Burn subtitle ลงวิดีโอ (เร็ว – ffmpeg ASS)\n"
+                "No  = Export วิดีโอเฉยๆ ไม่มีซับ"
+            )
+
+        out = filedialog.asksaveasfilename(
+            title="Export", defaultextension=".mp4",
+            filetypes=[("MP4", "*.mp4"), ("All", "*.*")])
         if not out: return
+
         self._status("Exporting…")
-        threading.Thread(target=self._export_worker,args=(out,),daemon=True).start()
+        if burn_subs:
+            # Fast path: use ASS subtitle filter
+            threading.Thread(
+                target=self._export_with_subs_worker,
+                args=(out,), daemon=True
+            ).start()
+        else:
+            threading.Thread(
+                target=self._export_worker,
+                args=(out,), daemon=True
+            ).start()
 
     def _export_worker(self, out):
         try:
@@ -1705,6 +1729,21 @@ class EditorPage(ctk.CTkFrame):
         except Exception as ex:
             self.after(0,lambda:(self._status("Export error"),
                                   messagebox.showerror("Error",str(ex))))
+
+    def _export_with_subs_worker(self, out):
+        """Export main video and burn subtitles using fast ffmpeg ASS filter."""
+        try:
+            vpath = self.tracks["main"][0]["path"]
+            export_video_with_subtitles(
+                vpath, out, self.segments, self.style,
+                progress_cb=lambda m: self.after(0, lambda ms=m: self._status(ms))
+            )
+            self.after(0, lambda: messagebox.showinfo("Done", f"Saved:\n{out}"))
+        except Exception as ex:
+            self.after(0, lambda: (
+                self._status("Export error"),
+                messagebox.showerror("Export Error", str(ex))
+            ))
 
     # ─────────────────────────────────────────────────────────────────────────
     # Subtitle dialog (unchanged logic, updated style)
